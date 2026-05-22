@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Analyze Resume - Skill Gap Analyzer{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-upload me-2"></i>Upload Resume for Analysis
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" id="analyzeForm">
+                    <div class="mb-4">
+                        <label for="job_role" class="form-label">
+                            <i class="fas fa-briefcase me-1"></i>Select Target Job Role
+                        </label>
+                        <select class="form-select" id="job_role" name="job_role" required>
+                            <option value="">Choose a job role...</option>
+                            {% for role in job_roles %}
+                            <option value="{{ role.id }}">{{ role.role_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="resume" class="form-label">
+                            <i class="fas fa-file-upload me-1"></i>Upload Resume (PDF or DOCX)
+                        </label>
+                        <input type="file" class="form-control" id="resume" name="resume" 
+                               accept=".pdf,.docx" required>
+                        <div class="form-text">
+                            Supported formats: PDF, DOCX. Maximum file size: 10MB
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>How it works:</strong> Our system will analyze your resume using TF-IDF 
+                            vectorization and cosine similarity to compare it with the selected job role 
+                            requirements, then identify skill gaps and create a personalized learning path.
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                            <i class="fas fa-chart-line me-2"></i>Analyze My Skills
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4 shadow">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>Tips for Best Results
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-check-circle text-success me-1"></i>Do:</h6>
+                        <ul class="small">
+                            <li>Include all technical skills and technologies</li>
+                            <li>List projects and their technologies used</li>
+                            <li>Mention certifications and courses</li>
+                            <li>Use clear, standard skill names</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-times-circle text-danger me-1"></i>Don't:</h6>
+                        <ul class="small">
+                            <li>Use images instead of text for skills</li>
+                            <li>Use acronyms without explanation</li>
+                            <li>Submit scanned documents</li>
+                            <li>Include irrelevant personal information</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('analyzeForm').addEventListener('submit', function(e) {
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Analyzing...';
+});
+
+document.getElementById('resume').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const fileSize = file.size / 1024 / 1024; // Convert to MB
+        if (fileSize > 10) {
+            alert('File size must be less than 10MB');
+            e.target.value = '';
+        }
+    }
+});
+</script>
+{% endblock %}

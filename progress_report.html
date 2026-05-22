@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block title %}Progress Report - Skill Gap Analyzer{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Header Section -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-info text-white">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h4 class="mb-0">
+                            <i class="fas fa-chart-line me-2"></i>Progress Report
+                        </h4>
+                        <p class="mb-0">Track your learning journey and skill development</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-light">
+                            <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overall Progress -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card shadow h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-tasks fa-3x text-primary mb-3"></i>
+                        <h2 class="display-6">{{ completed_items }}/{{ total_items }}</h2>
+                        <p class="text-muted">Tasks Completed</p>
+                        <div class="progress mb-2" style="height: 10px;">
+                            <div class="progress-bar bg-primary" role="progressbar" 
+                                 style="width: {{ progress_percentage }}%">
+                            </div>
+                        </div>
+                        <small class="text-muted">{{ "%.1f"|format(progress_percentage) }}% Complete</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-graduation-cap fa-3x text-success mb-3"></i>
+                        <h2 class="display-6">{{ skill_progress|length }}</h2>
+                        <p class="text-muted">Skills in Progress</p>
+                        <div class="mt-3">
+                            {% for skill in skill_progress[:3] %}
+                            <span class="badge bg-success me-1">{{ skill.skill.title() }}</span>
+                            {% endfor %}
+                            {% if skill_progress|length > 3 %}
+                            <span class="badge bg-secondary">+{{ skill_progress|length - 3 }} more</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-trophy fa-3x text-warning mb-3"></i>
+                        <h2 class="display-6">{{ skill_progress|selectattr('completion_rate', 'equalto', 100)|list|length }}</h2>
+                        <p class="text-muted">Mastered Skills</p>
+                        <div class="mt-3">
+                            {% for skill in skill_progress if skill.completion_rate == 100 %}
+                            <span class="badge bg-warning me-1">{{ skill.skill.title() }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Skill Progress Details -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>Skill Progress Details
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if skill_progress %}
+                    <div class="row">
+                        {% for skill in skill_progress %}
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card border-{{ 'success' if skill.completion_rate == 100 else 'warning' if skill.completion_rate >= 50 else 'danger' }}">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="card-title mb-0">{{ skill.skill.title() }}</h6>
+                                        <span class="badge bg-{{ 'success' if skill.completion_rate == 100 else 'warning' if skill.completion_rate >= 50 else 'danger' }}">
+                                            {{ "%.0f"|format(skill.completion_rate) }}%
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="progress mb-2" style="height: 8px;">
+                                        <div class="progress-bar bg-{{ 'success' if skill.completion_rate == 100 else 'warning' if skill.completion_rate >= 50 else 'danger' }}" 
+                                             role="progressbar" 
+                                             style="width: {{ skill.completion_rate }}%">
+                                        </div>
+                                    </div>
+                                    
+                                    <small class="text-muted">
+                                        {{ skill.completed_weeks }} of {{ skill.total_weeks }} weeks completed
+                                    </small>
+                                    
+                                    <div class="mt-2">
+                                        {% for week in skill.weeks %}
+                                        <span class="badge bg-{{ 'success' if week.completed else 'secondary' }} me-1" 
+                                              style="font-size: 0.7em;">
+                                            Week {{ week.week }}
+                                        </span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-chart-line fa-4x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Progress Data Available</h5>
+                        <p class="text-muted">Complete a resume analysis to start tracking your learning progress.</p>
+                        <a href="{{ url_for('analyze') }}" class="btn btn-primary">
+                            <i class="fas fa-upload me-1"></i>Start Analysis
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Learning Timeline -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar-alt me-2"></i>Learning Timeline
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if roadmap_items %}
+                    <div class="timeline">
+                        {% for item in roadmap_items %}
+                        <div class="timeline-item mb-3">
+                            <div class="card border-{{ 'success' if item.completed else 'warning' }}">
+                                <div class="card-body py-2">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-2 text-center">
+                                            <div class="week-badge bg-{{ 'success' if item.completed else 'warning' }} text-white rounded-circle d-inline-flex align-items-center justify-content-center" 
+                                                 style="width: 40px; height: 40px; font-size: 12px;">
+                                                <strong>W{{ item.week }}</strong>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <h6 class="mb-1">{{ item.topic }}</h6>
+                                            <small class="text-muted">
+                                                <i class="fas fa-tag me-1"></i>{{ item.skill.title() }}
+                                            </small>
+                                        </div>
+                                        <div class="col-md-2 text-center">
+                                            {% if item.completed %}
+                                                <i class="fas fa-check-circle text-success fa-2x"></i>
+                                                <br><small class="text-success">Completed</small>
+                                            {% else %}
+                                                <i class="fas fa-clock text-warning fa-2x"></i>
+                                                <br><small class="text-warning">Pending</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% if item.resource_link %}
+                                    <div class="mt-2">
+                                        <a href="{{ item.resource_link }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-external-link-alt me-1"></i>View Resource
+                                        </a>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
+                        <h6 class="text-muted">No Learning Timeline</h6>
+                        <p class="text-muted">Start your learning journey by analyzing your resume.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card shadow">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>Recent Analysis Activity
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_analyses %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Target Role</th>
+                                    <th>Match Score</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for analysis in recent_analyses %}
+                                <tr>
+                                    <td>{{ analysis.created_at[:10] }}</td>
+                                    <td>{{ analysis.selected_role }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="progress me-2" style="width: 80px; height: 15px;">
+                                                <div class="progress-bar 
+                                                    {% if analysis.similarity_score >= 0.8 %}bg-success
+                                                    {% elif analysis.similarity_score >= 0.6 %}bg-warning
+                                                    {% else %}bg-danger{% endif %}" 
+                                                     role="progressbar" 
+                                                     style="width: {{ analysis.similarity_score * 100 }}%">
+                                                </div>
+                                            </div>
+                                            <small>{{ "%.1f"|format(analysis.similarity_score * 100) }}%</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if analysis.similarity_score >= 0.8 %}
+                                            <span class="badge bg-success">Excellent</span>
+                                        {% elif analysis.similarity_score >= 0.6 %}
+                                            <span class="badge bg-warning">Good</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Needs Work</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                        <h6 class="text-muted">No Recent Activity</h6>
+                        <p class="text-muted">Your analysis history will appear here.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+.timeline {
+    position: relative;
+    padding-left: 20px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, #007bff, #28a745);
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -25px;
+    top: 20px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #007bff;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #007bff;
+}
+
+.week-badge {
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+}
+
+.progress {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    border-radius: 10px;
+    transition: width 0.6s ease;
+}
+</style>
+{% endblock %}

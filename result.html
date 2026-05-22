@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis Results - Skill Gap Analyzer{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <!-- Similarity Score Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-info text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Analysis Results
+                </h4>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <h2 class="display-4">
+                        <span id="similarityScore">{{ "%.1f"|format(similarity_score * 100) }}%</span>
+                    </h2>
+                    <p class="lead">Resume-Job Match Score</p>
+                </div>
+                
+                <div class="progress mb-3" style="height: 25px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated 
+                        {% if similarity_score >= 0.8 %}bg-success
+                        {% elif similarity_score >= 0.6 %}bg-warning
+                        {% else %}bg-danger{% endif %}" 
+                         role="progressbar" 
+                         style="width: {{ similarity_score * 100 }}%">
+                        {{ "%.1f"|format(similarity_score * 100) }}%
+                    </div>
+                </div>
+                
+                <div class="alert alert-{{ 'success' if similarity_score >= 0.8 else 'warning' if similarity_score >= 0.6 else 'danger' }}">
+                    {% if similarity_score >= 0.8 %}
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Excellent match!</strong> Your resume aligns well with the job requirements.
+                    {% elif similarity_score >= 0.6 %}
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Good match!</strong> You have many required skills but some gaps exist.
+                    {% else %}
+                        <i class="fas fa-times-circle me-2"></i>
+                        <strong>Significant gaps detected.</strong> Focus on the missing skills below.
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Skill Gaps Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Detected Skill Gaps
+                    {% if missing_skills %}
+                        <span class="badge bg-danger ms-2">{{ missing_skills|length }}</span>
+                    {% endif %}
+                </h4>
+            </div>
+            <div class="card-body">
+                {% if missing_skills %}
+                    <p class="text-muted mb-3">
+                        The following skills were found in the job description but are missing from your resume:
+                    </p>
+                    <div class="row">
+                        {% for skill in missing_skills %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-warning">
+                                <div class="card-body text-center py-2">
+                                    <i class="fas fa-times-circle text-danger mb-2"></i>
+                                    <h6 class="card-title mb-0">{{ skill.title() }}</h6>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+                        <h5 class="text-success">No skill gaps detected!</h5>
+                        <p class="text-muted">Your resume covers all the key skills required for this role.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Next Steps Card -->
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-route me-2"></i>Recommended Next Steps
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 text-center mb-3">
+                        <i class="fas fa-graduation-cap fa-3x text-primary mb-2"></i>
+                        <h6>View Learning Path</h6>
+                        <p class="small text-muted">Get a personalized roadmap to fill skill gaps</p>
+                        <a href="{{ url_for('roadmap') }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-arrow-right me-1"></i>View Roadmap
+                        </a>
+                    </div>
+                    <div class="col-md-4 text-center mb-3">
+                        <i class="fas fa-tachometer-alt fa-3x text-info mb-2"></i>
+                        <h6>Track Progress</h6>
+                        <p class="small text-muted">Monitor your learning journey</p>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-info btn-sm">
+                            <i class="fas fa-arrow-right me-1"></i>Dashboard
+                        </a>
+                    </div>
+                    <div class="col-md-4 text-center mb-3">
+                        <i class="fas fa-redo fa-3x text-success mb-2"></i>
+                        <h6>Analyze Another</h6>
+                        <p class="small text-muted">Compare with different job roles</p>
+                        <a href="{{ url_for('analyze') }}" class="btn btn-success btn-sm">
+                            <i class="fas fa-arrow-right me-1"></i>New Analysis
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Animate the similarity score on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const scoreElement = document.getElementById('similarityScore');
+    const targetScore = parseFloat(scoreElement.textContent);
+    let currentScore = 0;
+    const increment = targetScore / 50;
+    
+    const timer = setInterval(() => {
+        currentScore += increment;
+        if (currentScore >= targetScore) {
+            currentScore = targetScore;
+            clearInterval(timer);
+        }
+        scoreElement.textContent = currentScore.toFixed(1) + '%';
+    }, 20);
+});
+</script>
+{% endblock %}

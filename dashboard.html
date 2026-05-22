@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Skill Gap Analyzer{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Welcome Card -->
+    <div class="col-12 mb-4">
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h4 class="mb-1">
+                            <i class="fas fa-user-circle me-2"></i>Welcome back, {{ session.username }}!
+                        </h4>
+                        <p class="text-muted mb-0">Track your skill development journey and progress</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <a href="{{ url_for('analyze') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>New Analysis
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Overview -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Learning Progress
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <h2 class="display-4">{{ "%.1f"|format(progress_percentage) }}%</h2>
+                    <p class="text-muted">Completed</p>
+                </div>
+                
+                <div class="progress mb-3" style="height: 20px;">
+                    <div class="progress-bar bg-info" role="progressbar" 
+                         style="width: {{ progress_percentage }}%">
+                        {{ completed_items }}/{{ total_items }}
+                    </div>
+                </div>
+                
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h5 class="text-success">{{ completed_items }}</h5>
+                        <small class="text-muted">Completed</small>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-warning">{{ total_items - completed_items }}</h5>
+                        <small class="text-muted">Remaining</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Skill Gaps Summary -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Identified Skill Gaps
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if skill_gaps %}
+                    <div class="row">
+                        {% for gap in skill_gaps %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-warning h-100">
+                                <div class="card-body text-center py-3">
+                                    <h6 class="card-title mb-1">{{ gap.missing_skill.title() }}</h6>
+                                    <span class="badge bg-warning">{{ gap.count }} occurrence{{ 's' if gap.count > 1 else '' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+                        <h6 class="text-success">No skill gaps detected!</h6>
+                        <p class="text-muted mb-0">Great job! Your skills align well with job requirements.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Analyses -->
+    <div class="col-12 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>Recent Resume Analyses
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_analyses %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Target Role</th>
+                                    <th>Match Score</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for analysis in recent_analyses %}
+                                <tr>
+                                    <td>{{ analysis.created_at[:10] }}</td>
+                                    <td>
+                                        <i class="fas fa-briefcase me-1"></i>{{ analysis.selected_role }}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="progress me-2" style="width: 100px; height: 20px;">
+                                                <div class="progress-bar 
+                                                    {% if analysis.similarity_score >= 0.8 %}bg-success
+                                                    {% elif analysis.similarity_score >= 0.6 %}bg-warning
+                                                    {% else %}bg-danger{% endif %}" 
+                                                     role="progressbar" 
+                                                     style="width: {{ analysis.similarity_score * 100 }}%">
+                                                </div>
+                                            </div>
+                                            <small>{{ "%.1f"|format(analysis.similarity_score * 100) }}%</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if analysis.similarity_score >= 0.8 %}
+                                            <span class="badge bg-success">Excellent Match</span>
+                                        {% elif analysis.similarity_score >= 0.6 %}
+                                            <span class="badge bg-warning">Good Match</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Needs Improvement</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('roadmap') }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-route me-1"></i>View Path
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-file-upload fa-3x text-muted mb-3"></i>
+                        <h6 class="text-muted">No analyses yet</h6>
+                        <p class="text-muted mb-3">Upload your resume to get started with skill analysis</p>
+                        <a href="{{ url_for('analyze') }}" class="btn btn-primary">
+                            <i class="fas fa-upload me-1"></i>First Analysis
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center mb-3">
+                        <i class="fas fa-upload fa-3x text-primary mb-2"></i>
+                        <h6>New Analysis</h6>
+                        <p class="small text-muted">Upload a new resume for analysis</p>
+                        <a href="{{ url_for('analyze') }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-arrow-right me-1"></i>Analyze
+                        </a>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <i class="fas fa-route fa-3x text-success mb-2"></i>
+                        <h6>Learning Path</h6>
+                        <p class="small text-muted">View your personalized roadmap</p>
+                        <a href="{{ url_for('roadmap') }}" class="btn btn-success btn-sm">
+                            <i class="fas fa-arrow-right me-1"></i>View Path
+                        </a>
+                    </div>
+                    <div class="col-md-3 text-center mb-3">
+                        <i class="fas fa-chart-line fa-3x text-info mb-2"></i>
+                        <h6>Progress Report</h6>
+                        <p class="small text-muted">Track your learning progress</p>
+                        <a href="{{ url_for('progress_report') }}" class="btn btn-info btn-sm">
+                            <i class="fas fa-arrow-right me-1"></i>View Report
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
